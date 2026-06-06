@@ -2172,35 +2172,69 @@ function girisTab(tip){
 
 function girisYonetici(){
   const girilen = document.getElementById('girisYoneticiSifre').value;
-  const kayitli = ayarlar.yoneticiSifre||'';
+  if(!girilen){toast('⚠️ Şifre girin');return}
 
-  // İlk giriş — şifre henüz belirlenmemiş
-  if(!kayitli){
-    if(!girilen){toast('⚠️ Şifre belirleyin');return}
-    ayarlar.yoneticiSifre = girilen;
-    kaydet();
-    toast('✓ Şifreniz kaydedildi');
-    girisBasarili('yonetici');
-    return;
-  }
-  if(girilen === kayitli){
-    girisBasarili('yonetici');
+  const kontrol = ()=>{
+    const kayitli = ayarlar.yoneticiSifre||'';
+
+    // Şifre hiç belirlenmemiş — sadece ayarlar sayfasından belirlenebilir
+    if(!kayitli){
+      // Güvenlik: İlk şifre belirleme sadece ayarlar sayfasından yapılmalı
+      // Ama ilk kurulumda kolaylık için burada da kabul et
+      // Ancak Firebase'den veri gelmişse ve şifre yoksa gerçekten ilk kurulum
+      if(ayarlar.binaAdi || Object.keys(ayarlar).length > 2){
+        // Bina kurulmuş ama şifre yok — yönetici sıfırlamış olabilir
+        // Güvenlik için reddet
+        document.getElementById('hataYonetici').classList.add('show');
+        document.getElementById('girisYoneticiSifre').value='';
+        toast('⚠️ Şifre belirlenmemiş, lütfen yöneticiyle iletişime geçin');
+        return;
+      }
+      // Gerçek ilk kurulum
+      ayarlar.yoneticiSifre = girilen;
+      kaydet();
+      toast('✓ Yönetici şifresi belirlendi');
+      girisBasarili('yonetici');
+      return;
+    }
+
+    if(girilen === kayitli){
+      document.getElementById('hataYonetici').classList.remove('show');
+      girisBasarili('yonetici');
+    } else {
+      document.getElementById('hataYonetici').classList.add('show');
+      document.getElementById('girisYoneticiSifre').value='';
+    }
+  };
+
+  // Her zaman önce Firebase'den çek — bağlantı olmadan giriş yok
+  if(typeof window.firebaseYukle==='function'){
+    window.firebaseYukle(true).then(kontrol).catch(()=>{
+      toast('⚠️ Bağlantı kurulamadı, internet bağlantısını kontrol edin');
+    });
   } else {
-    document.getElementById('hataYonetici').classList.add('show');
-    document.getElementById('girisYoneticiSifre').value='';
+    kontrol();
   }
 }
 
 function girisSakin(){
-  const no     = document.getElementById('girisDaireNo').value.trim().toUpperCase();
-  const sifre  = document.getElementById('girisSakinSifre').value;
-  const daire  = daireler.find(d=>d.no.toUpperCase()===no);
-  if(!daire||!daire.sifre||daire.sifre!==sifre){
-    document.getElementById('hataSakin').classList.add('show');
-    document.getElementById('girisSakinSifre').value='';
-    return;
-  }
-  girisBasarili('sakin', daire);
+  const no    = document.getElementById('girisDaireNo').value.trim().toUpperCase();
+  const sifre = document.getElementById('girisSakinSifre').value;
+  if(!no||!sifre){toast('⚠️ Daire no ve şifre girin');return}
+
+  const kontrol = ()=>{
+    const daire = daireler.find(d=>d.no.toUpperCase()===no);
+    if(!daire||!daire.sifre||daire.sifre!==sifre){
+      document.getElementById('hataSakin').classList.add('show');
+      document.getElementById('girisSakinSifre').value='';
+      return;
+    }
+    girisBasarili('sakin', daire);
+  };
+
+  if(typeof window.firebaseYukle==='function'){
+    window.firebaseYukle(true).then(kontrol).catch(()=>kontrol());
+  } else { kontrol(); }
 }
 
 function girisBasarili(tip, daire){
@@ -2234,13 +2268,43 @@ function girisBasarili(tip, daire){
 }
 
 function sakinCikis(){
-  aktifKullanici=null;
+  aktifKullanici = null;
+  window._firebaseBasladi = false;
+
+  // Tüm panelleri gizle
   document.getElementById('sakinPanel').style.display='none';
+  document.querySelector('.header').style.display='none';
+  document.querySelector('.nav').style.display='none';
+  document.querySelectorAll('.page').forEach(p=>p.style.display='none');
+  document.getElementById('fabBtn').style.display='none';
+
+  // Formu temizle
   document.getElementById('girisDaireNo').value='';
   document.getElementById('girisSakinSifre').value='';
   document.getElementById('girisYoneticiSifre').value='';
   document.getElementById('hataSakin').classList.remove('show');
   document.getElementById('hataYonetici').classList.remove('show');
+
+  // Firebase'den güncel veriyi çek
+  if(typeof window.firebaseYukle === 'function'){
+    window.firebaseYukle(true).catch(e=>console.log(e));
+  }
+
+  // Giriş ekranını göster
+  document.getElementById('girisEkrani').style.display='flex';
+}
+
+// Giriş ekranı her gösterildiğinde Firebase'den veri çek
+function girisEkraniniGoster(){
+  if(typeof window.firebaseYukle==='function'){
+    window.firebaseYukle(true).then(()=>{
+      // Bina adını güncelle
+      if(ayarlar.binaAdi){
+        const logoAdi = document.getElementById('girisLogoAdi');
+        if(logoAdi) logoAdi.textContent = '🏢 ' + ayarlar.binaAdi;
+      }
+    }).catch(e=>console.log(e));
+  }
   document.getElementById('girisEkrani').style.display='flex';
 }
 
