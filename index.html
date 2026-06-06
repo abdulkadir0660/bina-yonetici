@@ -51,6 +51,11 @@
       if(degisti && typeof render === 'function'){
         render();
         kasaHesapla();
+        // Eğer sakin giriş yapmışsa paneli de güncelle
+        if(aktifKullanici && aktifKullanici !== 'yonetici'){
+          const guncelDaire = daireler.find(d=>d.no===aktifKullanici.no)||aktifKullanici;
+          if(typeof renderSakinPanel==='function') renderSakinPanel(guncelDaire);
+        }
       }
     }
   });
@@ -66,7 +71,7 @@
   };
 
   // İlk yüklemede Firestore'dan çek
-  window.firebaseYukle = async function(){
+  window.firebaseYukle = async function(sadeceCek){
     try {
       const snap = await getDoc(binaRef);
       if(snap.exists()){
@@ -87,6 +92,10 @@
     } catch(err){
       console.error('Firebase yükleme hatası:', err);
     }
+
+    // Sadece veri çek modunda (sakin girişi için) burada dur
+    if(sadeceCek) return;
+
     // Bağlantı göstergesini güncelle
     const yukleniyor = document.getElementById('firebaseYukleniyor');
     if(yukleniyor) yukleniyor.innerHTML = `<div style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.15);padding:8px 16px;border-radius:20px;"><div style="width:8px;height:8px;border-radius:50%;background:#52b788;"></div><span style="font-size:12px;color:rgba(255,255,255,0.8);font-weight:700;">☁️ Bağlantı kuruldu</span></div>`;
@@ -2210,7 +2219,6 @@ function girisBasarili(tip, daire){
   aktifKullanici = tip==='yonetici' ? 'yonetici' : daire;
   document.getElementById('girisEkrani').style.display='none';
   if(tip==='yonetici'){
-    // Yönetici paneli göster
     document.querySelector('.header').style.display='';
     document.querySelector('.nav').style.display='';
     document.querySelectorAll('.page').forEach(p=>p.style.display='');
@@ -2218,13 +2226,22 @@ function girisBasarili(tip, daire){
     document.getElementById('sakinPanel').style.display='none';
     render();
   } else {
-    // Sakin paneli göster
     document.querySelector('.header').style.display='none';
     document.querySelector('.nav').style.display='none';
     document.querySelectorAll('.page').forEach(p=>p.style.display='none');
     document.getElementById('fabBtn').style.display='none';
     document.getElementById('sakinPanel').style.display='block';
-    renderSakinPanel(daire);
+
+    // Firebase'den güncel veriyi çek, sonra render et
+    if(typeof window.firebaseYukle === 'function'){
+      window.firebaseYukle(true).then(()=>{
+        // Sakin objesini güncel daireler listesinden bul
+        const guncelDaire = daireler.find(d=>d.no===daire.no)||daire;
+        renderSakinPanel(guncelDaire);
+      });
+    } else {
+      renderSakinPanel(daire);
+    }
   }
 }
 
