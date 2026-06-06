@@ -34,28 +34,24 @@
   // Firestore'dan veri çek ve dinle
   const binaRef = doc(db, 'bina', 'veri');
 
-  // Gerçek zamanlı dinle — başka biri değişiklik yapınca otomatik güncelle
+  // Gerçek zamanlı dinle — her değişiklikte tüm veriyi güncelle
   onSnapshot(binaRef, (snap) => {
     if(snap.exists()){
       const veri = snap.data();
-      let degisti = false;
+      if(veri.ayarlar)    ayarlar    = veri.ayarlar;
+      if(veri.hareketler) hareketler = veri.hareketler;
+      if(veri.daireler)   daireler   = veri.daireler;
+      if(veri.evraklar)   evraklar   = veri.evraklar;
+      if(veri.faturalar)  faturalar  = veri.faturalar;
+      if(veri.ekstralar)  ekstralar  = veri.ekstralar;
 
-      // Sadece dışarıdan gelen değişiklikleri uygula (kendi yazdığımızı değil)
-      if(JSON.stringify(veri.ayarlar)    !== JSON.stringify(window._sonKayit?.ayarlar))    { ayarlar    = veri.ayarlar    || ayarlar;    degisti=true; }
-      if(JSON.stringify(veri.hareketler) !== JSON.stringify(window._sonKayit?.hareketler)) { hareketler = veri.hareketler || hareketler; degisti=true; }
-      if(JSON.stringify(veri.daireler)   !== JSON.stringify(window._sonKayit?.daireler))   { daireler   = veri.daireler   || daireler;   degisti=true; }
-      if(JSON.stringify(veri.evraklar)   !== JSON.stringify(window._sonKayit?.evraklar))   { evraklar   = veri.evraklar   || evraklar;   degisti=true; }
-      if(JSON.stringify(veri.faturalar)  !== JSON.stringify(window._sonKayit?.faturalar))  { faturalar  = veri.faturalar  || faturalar;  degisti=true; }
-      if(JSON.stringify(veri.ekstralar)  !== JSON.stringify(window._sonKayit?.ekstralar))  { ekstralar  = veri.ekstralar  || ekstralar;  degisti=true; }
+      if(typeof render === 'function') render();
+      if(typeof kasaHesapla === 'function') kasaHesapla();
 
-      if(degisti && typeof render === 'function'){
-        render();
-        kasaHesapla();
-        // Eğer sakin giriş yapmışsa paneli de güncelle
-        if(aktifKullanici && aktifKullanici !== 'yonetici'){
-          const guncelDaire = daireler.find(d=>d.no===aktifKullanici.no)||aktifKullanici;
-          if(typeof renderSakinPanel==='function') renderSakinPanel(guncelDaire);
-        }
+      // Sakin girişi yapmışsa paneli yenile
+      if(typeof aktifKullanici !== 'undefined' && aktifKullanici && aktifKullanici !== 'yonetici'){
+        const gD = daireler.find(d=>d.no===aktifKullanici.no)||aktifKullanici;
+        if(typeof renderSakinPanel==='function') renderSakinPanel(gD);
       }
     }
   });
@@ -820,7 +816,7 @@ body{background:var(--bg);font-family:'Nunito',sans-serif;color:var(--text);min-
       <button class="sakin-cikis" onclick="sakinCikis()">Çıkış</button>
     </div>
     <div class="sakin-borc-kutu">
-      <div class="sakin-borc-label">💳 Toplam Borcunuz</div>
+      <div class="sakin-borc-label">💳 Toplam Aidat Borcunuz</div>
       <div class="sakin-borc-tutar" id="sakinBorcTutar">0 ₺</div>
       <div style="font-size:11px;opacity:.7;margin-top:4px;font-weight:600" id="sakinBorcAlt">—</div>
     </div>
@@ -828,29 +824,42 @@ body{background:var(--bg);font-family:'Nunito',sans-serif;color:var(--text);min-
 
   <nav class="sakin-nav">
     <button class="sakin-nav-btn active" onclick="sakinGoPage('aidat')" id="snav-aidat">📅 Aidat</button>
-    <button class="sakin-nav-btn" onclick="sakinGoPage('duyurular')" id="snav-duyurular">📢 Duyurular</button>
-    <button class="sakin-nav-btn" onclick="sakinGoPage('giderler')" id="snav-giderler">📊 Giderler</button>
-    <button class="sakin-nav-btn" onclick="sakinGoPage('faturalar')" id="snav-faturalar">🧾 Faturalar</button>
+    <button class="sakin-nav-btn" onclick="sakinGoPage('ekstra')" id="snav-ekstra">🏗️ Ekstra</button>
+    <button class="sakin-nav-btn" onclick="sakinGoPage('duyurular')" id="snav-duyurular">📢 Duyuru</button>
+    <button class="sakin-nav-btn" onclick="sakinGoPage('giderler')" id="snav-giderler">📊 Gider</button>
+    <button class="sakin-nav-btn" onclick="sakinGoPage('faturalar')" id="snav-faturalar">🧾 Fatura</button>
   </nav>
 
-  <div class="sakin-page active" id="spage-aidat">
-    <div class="section-title" style="margin-top:16px"><span>📅</span> Aidat Durumunuz</div>
-    <div id="sakinAidatDetay"></div>
+  <div id="sakinYukleniyor" style="text-align:center;padding:40px;display:none;">
+    <div style="font-size:32px;margin-bottom:8px;">⏳</div>
+    <div style="font-size:13px;font-weight:700;color:var(--sub);">Veriler yükleniyor...</div>
   </div>
 
-  <div class="sakin-page" id="spage-duyurular">
-    <div class="section-title" style="margin-top:16px"><span>📢</span> Duyurular</div>
-    <div id="sakinDuyuruDetay"></div>
-  </div>
+  <div id="sakinIcerik">
+    <div class="sakin-page active" id="spage-aidat">
+      <div class="section-title" style="margin-top:16px"><span>📅</span> Aidat Durumunuz</div>
+      <div id="sakinAidatDetay"></div>
+    </div>
 
-  <div class="sakin-page" id="spage-giderler">
-    <div class="section-title" style="margin-top:16px"><span>📊</span> Bina Ortak Giderleri</div>
-    <div id="sakinGiderDetay"></div>
-  </div>
+    <div class="sakin-page" id="spage-ekstra">
+      <div class="section-title" style="margin-top:16px"><span>🏗️</span> Ekstra Ödemeler</div>
+      <div id="sakinEkstraDetay"></div>
+    </div>
 
-  <div class="sakin-page" id="spage-faturalar">
-    <div class="section-title" style="margin-top:16px"><span>🧾</span> Ortak Faturalar</div>
-    <div id="sakinFaturaDetay"></div>
+    <div class="sakin-page" id="spage-duyurular">
+      <div class="section-title" style="margin-top:16px"><span>📢</span> Duyurular</div>
+      <div id="sakinDuyuruDetay"></div>
+    </div>
+
+    <div class="sakin-page" id="spage-giderler">
+      <div class="section-title" style="margin-top:16px"><span>📊</span> Bina Ortak Giderleri</div>
+      <div id="sakinGiderDetay"></div>
+    </div>
+
+    <div class="sakin-page" id="spage-faturalar">
+      <div class="section-title" style="margin-top:16px"><span>🧾</span> Ortak Faturalar</div>
+      <div id="sakinFaturaDetay"></div>
+    </div>
   </div>
 </div>
 
@@ -2264,126 +2273,162 @@ function sakinGoPage(s){
 }
 
 async function renderSakinPanel(d){
-  // Her seferinde Firebase'den güncel veriyi çek
-  if(typeof window.firebaseYukle === 'function'){
-    try { await window.firebaseYukle(true); } catch(e){}
+  const yuklEl=document.getElementById('sakinYukleniyor');
+  const icerikEl=document.getElementById('sakinIcerik');
+  if(yuklEl)yuklEl.style.display='block';
+  if(icerikEl)icerikEl.style.display='none';
+
+  document.getElementById('sakinAd').textContent=d.kisi||d.no;
+  document.getElementById('sakinDaireNo').textContent='🏠 '+d.no+(d.kat?' · Kat '+d.kat:'');
+
+  if(typeof window.firebaseYukle==='function'){
+    try{await window.firebaseYukle(true);}catch(e){console.log('fb err',e);}
   }
-  // Güncel daire bilgisini yenile
-  const guncelD = daireler.find(x=>x.no===d.no)||d;
 
-  // Header
-  document.getElementById('sakinAd').textContent = guncelD.kisi||guncelD.no;
-  document.getElementById('sakinDaireNo').textContent = '🏠 '+guncelD.no+(guncelD.kat?' · Kat '+guncelD.kat:'');
+  const gD=daireler.find(x=>x.no===d.no)||d;
+  const simdiYil=bugun().getFullYear();
+  const simdiAy=bugun().getMonth();
 
-  const simdiYilS = bugun().getFullYear();
-  const simdiAyS  = bugun().getMonth();
   let borcAy=0;
-  if(!guncelD.yonetici){
-    const aylarS = (guncelD.yillikAylar&&guncelD.yillikAylar[simdiYilS])||Array(12).fill('G');
-    borcAy = aylarS.filter((a,i)=>a!=='O'&&a!=='E'&&i<=simdiAyS).length;
+  if(!gD.yonetici){
+    const aylarB=(gD.yillikAylar&&gD.yillikAylar[simdiYil])||Array(12).fill('G');
+    borcAy=aylarB.filter((a,i)=>a!=='O'&&a!=='E'&&i<=simdiAy).length;
   }
-  const topBorc=borcAy*Number(guncelD.aidat||0);
+  const topBorc=borcAy*Number(gD.aidat||0);
   document.getElementById('sakinBorcTutar').textContent=para(topBorc);
   document.getElementById('sakinBorcTutar').style.color=topBorc>0?'#ffccaa':'#aaffcc';
   document.getElementById('sakinBorcAlt').textContent=topBorc>0?borcAy+' ay ödenmemiş':'Tüm aidatlar ödenmiş ✓';
 
+  // AİDAT
   const aidatEl=document.getElementById('sakinAidatDetay');
-  if(guncelD.yonetici){
-    aidatEl.innerHTML=`<div class="aidat-kart" style="text-align:center;padding:24px">
-      <div style="font-size:32px">🔑</div>
-      <div style="font-size:15px;font-weight:800;color:#c47000;margin-top:8px">Yönetici Dairesi</div>
-      <div style="font-size:13px;color:var(--sub);margin-top:4px">Bu daire aidattan muaftır</div>
-    </div>`;
+  if(gD.yonetici){
+    aidatEl.innerHTML=`<div class="aidat-kart" style="text-align:center;padding:24px"><div style="font-size:32px">🔑</div><div style="font-size:15px;font-weight:800;color:#c47000;margin-top:8px">Yönetici Dairesi</div><div style="font-size:13px;color:var(--sub);margin-top:4px">Bu daire aidattan muaftır</div></div>`;
   } else {
-    const simdiYilSA = bugun().getFullYear();
-    const simdiAySA  = bugun().getMonth();
-    const aylarSA = (guncelD.yillikAylar&&guncelD.yillikAylar[simdiYilSA])||Array(12).fill('G');
-    const ayHTML = aylarSA.map((durum,ai)=>{
-      const ayGecti = ai<=simdiAySA;
-      const cls = durum==='O'?'odendi':durum==='E'?'erken':ayGecti?'bekliyor':'gelecek';
-      const s   = durum==='O'?'✓':durum==='E'?'⚡':ayGecti?'✕':'·';
-      return`<div class="ay-d-kutu ${cls}"><span style="font-size:11px">${s}</span><span>${AY_K[ai]}</span></div>`;
+    const aylarA=(gD.yillikAylar&&gD.yillikAylar[simdiYil])||Array(12).fill('G');
+    const odenenAy=aylarA.filter(a=>a==='O'||a==='E').length;
+    const ayHTML=aylarA.map((durum,ai)=>{
+      const gecti=ai<=simdiAy;
+      const cls=durum==='O'?'odendi':durum==='E'?'erken':gecti?'bekliyor':'gelecek';
+      const s=durum==='O'?'✓':durum==='E'?'⚡':gecti?'✕':'·';
+      return`<div class="ay-d-kutu ${cls}" title="${AYLAR_F[ai]}"><span style="font-size:11px">${s}</span><span>${AY_K[ai]}</span></div>`;
     }).join('');
     aidatEl.innerHTML=`<div class="aidat-kart">
       <div class="aidat-header">
-        <div><div class="daire-adi">Aidat Durumu ${simdiYilSA}</div>
-        <div class="daire-kisi">${guncelD.aidat?para(guncelD.aidat)+'/ay':''}</div></div>
-        <div style="text-align:right">
-          <div style="font-size:18px;font-weight:900;color:${topBorc>0?'var(--warn)':'var(--ok)'}">
-            ${topBorc>0?para(topBorc):'✓ Temiz'}
-          </div>
-        </div>
+        <div><div class="daire-adi">📅 ${simdiYil} Yılı Aidat</div>
+        <div class="daire-kisi">${gD.aidat?para(gD.aidat)+'/ay · ':''} ${odenenAy}/12 ay ödendi</div></div>
+        <div style="text-align:right"><div style="font-size:18px;font-weight:900;color:${topBorc>0?'var(--warn)':'var(--ok)'}">
+          ${topBorc>0?para(topBorc):'✓ Temiz'}</div></div>
       </div>
       <div class="ay-durum-grid">${ayHTML}</div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+        <span style="font-size:10px;font-weight:700;color:var(--ok);">✓ Ödendi</span>
+        <span style="font-size:10px;font-weight:700;color:#1a6aaa;">⚡ Erken</span>
+        <span style="font-size:10px;font-weight:700;color:var(--warn);">✕ Ödenmedi</span>
+        <span style="font-size:10px;font-weight:700;color:var(--sub);">· Gelmedi</span>
+      </div>
     </div>`;
   }
 
-  const aidatEl=document.getElementById('sakinAidatDetay');
-
-  // Bina giderleri — Firebase'den güncel veriyi kullan
-  const giderEl=document.getElementById('sakinGiderDetay');
-  const giderlerS=hareketler.filter(h=>h.tip==='gider');
-  if(!giderlerS.length){
-    giderEl.innerHTML=`<div class="bos-mesaj"><div class="bos-ikon">📊</div><p>Kayıtlı gider yok</p></div>`;
-  } else {
-    const topGid=giderlerS.reduce((s,h)=>s+Number(h.tutar),0);
-    giderEl.innerHTML=`
-      <div class="aidat-kart" style="margin-bottom:12px;text-align:center;background:#fff8f8">
-        <div style="font-size:11px;color:var(--sub);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Toplam Bina Gideri</div>
-        <div style="font-size:26px;font-weight:900;color:var(--warn)">${para(topGid)}</div>
-      </div>`+
-      giderlerS.slice().reverse().map(h=>`
-      <div class="fatura-kart">
-        <div class="fatura-ikon diger">${(h.kategori||'📦').split(' ')[0]}</div>
-        <div class="fatura-bilgi">
-          <div class="fatura-adi">${h.aciklama||h.kategori}</div>
-          <div class="fatura-tarih">${(h.kategori||'').replace(/^\S+\s/,'')} · ${formatTarih(h.tarih)}</div>
-        </div>
-        <div class="fatura-tutar gider-renk">−${para(h.tutar)}</div>
-      </div>`).join('');
+  // EKSTRA
+  const ekstraEl=document.getElementById('sakinEkstraDetay');
+  if(ekstraEl){
+    const benimEkstra=ekstralar.filter(k=>k.daireler&&k.daireler.some(dd=>dd.daireNo===gD.no));
+    if(!benimEkstra.length){
+      ekstraEl.innerHTML=`<div class="bos-mesaj"><div class="bos-ikon">🏗️</div><p>Ekstra ödeme yok</p></div>`;
+    } else {
+      ekstraEl.innerHTML=benimEkstra.map(k=>{
+        const benim=k.daireler.find(dd=>dd.daireNo===gD.no);
+        if(!benim)return'';
+        const borclu=benim.odemeler.filter(o=>o.durum!=='O').length*k.tutar;
+        const odenen=benim.odemeler.filter(o=>o.durum==='O').length;
+        const kutular=benim.odemeler.map(o=>{
+          const cls=o.durum==='O'?'odendi':'bekliyor';
+          return`<div class="ay-d-kutu ${cls}"><span style="font-size:10px">${o.durum==='O'?'✓':'✕'}</span><span style="font-size:8px">${AY_K[o.ay]}</span></div>`;
+        }).join('');
+        return`<div class="aidat-kart" style="margin-bottom:10px;border-left:4px solid #f4a261;">
+          <div class="aidat-header">
+            <div><div class="daire-adi">🏗️ ${k.ad}</div>
+            <div class="daire-kisi">${para(k.tutar)}/ay · ${odenen}/${k.aySayi} ay ödendi</div></div>
+            <div style="text-align:right"><div style="font-size:16px;font-weight:900;color:${borclu>0?'var(--warn)':'var(--ok)'}">
+              ${borclu>0?para(borclu):'✓ Tamam'}</div></div>
+          </div>
+          <div class="ay-durum-grid" style="grid-template-columns:repeat(${Math.min(k.aySayi,6)},1fr)">${kutular}</div>
+        </div>`;
+      }).join('');
+    }
   }
 
-  // Faturalar
-  const faturaEl=document.getElementById('sakinFaturaDetay');
-  if(!faturalar.length){
-    faturaEl.innerHTML=`<div class="bos-mesaj"><div class="bos-ikon">🧾</div><p>Kayıtlı fatura yok</p></div>`;
-  } else {
-    const ikonMap={'💧 Su':'su','🔥 Doğalgaz':'gaz','⚡ Elektrik':'elektrik'};
-    faturaEl.innerHTML=faturalar.slice().reverse().map(f=>{
-      const tur=ikonMap[f.tur]||'diger';
-      const odendi=f.odeme==='Ödendi';
-      return`<div class="fatura-kart">
-        <div class="fatura-ikon ${tur}">${f.tur.split(' ')[0]}</div>
-        <div class="fatura-bilgi">
-          <div class="fatura-adi">${f.tur.replace(/^\S+\s/,'')}</div>
-          <div class="fatura-tarih">${f.donem}</div>
-        </div>
-        <div style="text-align:right">
-          <div class="fatura-tutar">${para(f.tutar)}</div>
-          <div class="fatura-durum ${odendi?'odendi':'bekliyor'}">${odendi?'✓ Ödendi':'⏳ Bekliyor'}</div>
-        </div>
-      </div>`;
-    }).join('');
-  }
-
-  // Duyurular
+  // DUYURULAR
   const duyuruEl=document.getElementById('sakinDuyuruDetay');
-  if(!duyuruEl) return;
-  const duyurular=(ayarlar.duyurular||[]);
-  if(!duyurular.length){
-    duyuruEl.innerHTML=`<div class="bos-mesaj"><div class="bos-ikon">📢</div><p>Henüz duyuru yok</p></div>`;
-  } else {
-    duyuruEl.innerHTML=duyurular.slice().reverse().map(dy=>`
-      <div class="aidat-kart" style="border-left:4px solid ${dy.renk||'var(--accent)'};margin-bottom:10px;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
-          <div style="font-size:15px;font-weight:800;">${dy.baslik}</div>
-          <div style="font-size:10px;color:var(--sub);font-weight:600;white-space:nowrap;margin-left:8px;">${formatTarih(dy.tarih)}</div>
-        </div>
-        <div style="font-size:13px;color:var(--text);line-height:1.6;">${dy.icerik}</div>
-        ${dy.onemli?'<div style="margin-top:8px;font-size:11px;font-weight:800;color:var(--warn);">⚠️ Önemli Duyuru</div>':''}
-      </div>`).join('');
+  if(duyuruEl){
+    const duyurular=(ayarlar.duyurular||[]);
+    if(!duyurular.length){
+      duyuruEl.innerHTML=`<div class="bos-mesaj"><div class="bos-ikon">📢</div><p>Henüz duyuru yok</p></div>`;
+    } else {
+      duyuruEl.innerHTML=duyurular.slice().reverse().map(dy=>`
+        <div class="aidat-kart" style="border-left:4px solid ${dy.renk||'var(--accent)'};margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+            <div style="font-size:15px;font-weight:800;">${dy.baslik}</div>
+            <div style="font-size:10px;color:var(--sub);font-weight:600;white-space:nowrap;margin-left:8px;">${formatTarih(dy.tarih)}</div>
+          </div>
+          <div style="font-size:13px;color:var(--text);line-height:1.6;">${dy.icerik}</div>
+          ${dy.onemli?'<div style="margin-top:8px;font-size:11px;font-weight:800;color:var(--warn);">⚠️ Önemli</div>':''}
+        </div>`).join('');
+    }
   }
+
+  // GİDERLER
+  const giderEl=document.getElementById('sakinGiderDetay');
+  if(giderEl){
+    const giderlerS=hareketler.filter(h=>h.tip==='gider');
+    if(!giderlerS.length){
+      giderEl.innerHTML=`<div class="bos-mesaj"><div class="bos-ikon">📊</div><p>Kayıtlı gider yok</p></div>`;
+    } else {
+      const topGid=giderlerS.reduce((s,h)=>s+Number(h.tutar),0);
+      giderEl.innerHTML=`<div style="background:#fff8f8;border-radius:12px;padding:14px;text-align:center;margin-bottom:12px;box-shadow:var(--shadow);">
+        <div style="font-size:11px;color:var(--sub);font-weight:700;text-transform:uppercase;margin-bottom:4px">Toplam Bina Gideri</div>
+        <div style="font-size:26px;font-weight:900;color:var(--warn)">${para(topGid)}</div>
+      </div>`+giderlerS.slice().reverse().map(h=>`
+        <div class="fatura-kart">
+          <div class="fatura-ikon diger">${(h.kategori||'📦').split(' ')[0]}</div>
+          <div class="fatura-bilgi">
+            <div class="fatura-adi">${h.aciklama||h.kategori||'Gider'}</div>
+            <div class="fatura-tarih">${formatTarih(h.tarih)}</div>
+          </div>
+          <div class="fatura-tutar" style="color:var(--warn);">−${para(h.tutar)}</div>
+        </div>`).join('');
+    }
+  }
+
+  // FATURALAR
+  const faturaEl=document.getElementById('sakinFaturaDetay');
+  if(faturaEl){
+    if(!faturalar.length){
+      faturaEl.innerHTML=`<div class="bos-mesaj"><div class="bos-ikon">🧾</div><p>Kayıtlı fatura yok</p></div>`;
+    } else {
+      const ikonMap={'💧 Su':'su','🔥 Doğalgaz':'gaz','⚡ Elektrik':'elektrik'};
+      faturaEl.innerHTML=faturalar.slice().reverse().map(f=>{
+        const tur=ikonMap[f.tur]||'diger';
+        const odendi=f.odeme==='Ödendi';
+        return`<div class="fatura-kart">
+          <div class="fatura-ikon ${tur}">${f.tur.split(' ')[0]}</div>
+          <div class="fatura-bilgi">
+            <div class="fatura-adi">${f.tur.replace(/^\S+\s/,'')}</div>
+            <div class="fatura-tarih">${f.donem}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="fatura-tutar">${para(f.tutar)}</div>
+            <div class="fatura-durum ${odendi?'odendi':'bekliyor'}">${odendi?'✓ Ödendi':'⏳ Bekliyor'}</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  if(yuklEl)yuklEl.style.display='none';
+  if(icerikEl)icerikEl.style.display='block';
 }
+
 
 // ═══ BAŞLAT — GİRİŞ EKRANIYLA ═══
 function uygulamaBaslat(){
