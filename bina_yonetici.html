@@ -2263,24 +2263,32 @@ function sakinGoPage(s){
   document.getElementById('snav-'+s).classList.add('active');
 }
 
-function renderSakinPanel(d){
+async function renderSakinPanel(d){
+  // Her seferinde Firebase'den güncel veriyi çek
+  if(typeof window.firebaseYukle === 'function'){
+    try { await window.firebaseYukle(true); } catch(e){}
+  }
+  // Güncel daire bilgisini yenile
+  const guncelD = daireler.find(x=>x.no===d.no)||d;
+
   // Header
-  document.getElementById('sakinAd').textContent = d.kisi||d.no;
-  document.getElementById('sakinDaireNo').textContent = '🏠 '+d.no+(d.kat?' · Kat '+d.kat:'');
+  document.getElementById('sakinAd').textContent = guncelD.kisi||guncelD.no;
+  document.getElementById('sakinDaireNo').textContent = '🏠 '+guncelD.no+(guncelD.kat?' · Kat '+guncelD.kat:'');
 
   const simdiYilS = bugun().getFullYear();
   const simdiAyS  = bugun().getMonth();
   let borcAy=0;
-  if(!d.yonetici){
-    const aylarS = (d.yillikAylar&&d.yillikAylar[simdiYilS])||Array(12).fill('G');
+  if(!guncelD.yonetici){
+    const aylarS = (guncelD.yillikAylar&&guncelD.yillikAylar[simdiYilS])||Array(12).fill('G');
     borcAy = aylarS.filter((a,i)=>a!=='O'&&a!=='E'&&i<=simdiAyS).length;
   }
-  const topBorc=borcAy*Number(d.aidat||0);
+  const topBorc=borcAy*Number(guncelD.aidat||0);
   document.getElementById('sakinBorcTutar').textContent=para(topBorc);
   document.getElementById('sakinBorcTutar').style.color=topBorc>0?'#ffccaa':'#aaffcc';
   document.getElementById('sakinBorcAlt').textContent=topBorc>0?borcAy+' ay ödenmemiş':'Tüm aidatlar ödenmiş ✓';
 
-  if(d.yonetici){
+  const aidatEl=document.getElementById('sakinAidatDetay');
+  if(guncelD.yonetici){
     aidatEl.innerHTML=`<div class="aidat-kart" style="text-align:center;padding:24px">
       <div style="font-size:32px">🔑</div>
       <div style="font-size:15px;font-weight:800;color:#c47000;margin-top:8px">Yönetici Dairesi</div>
@@ -2289,7 +2297,7 @@ function renderSakinPanel(d){
   } else {
     const simdiYilSA = bugun().getFullYear();
     const simdiAySA  = bugun().getMonth();
-    const aylarSA = (d.yillikAylar&&d.yillikAylar[simdiYilSA])||Array(12).fill('G');
+    const aylarSA = (guncelD.yillikAylar&&guncelD.yillikAylar[simdiYilSA])||Array(12).fill('G');
     const ayHTML = aylarSA.map((durum,ai)=>{
       const ayGecti = ai<=simdiAySA;
       const cls = durum==='O'?'odendi':durum==='E'?'erken':ayGecti?'bekliyor':'gelecek';
@@ -2299,7 +2307,7 @@ function renderSakinPanel(d){
     aidatEl.innerHTML=`<div class="aidat-kart">
       <div class="aidat-header">
         <div><div class="daire-adi">Aidat Durumu ${simdiYilSA}</div>
-        <div class="daire-kisi">${d.aidat?para(d.aidat)+'/ay':''}</div></div>
+        <div class="daire-kisi">${guncelD.aidat?para(guncelD.aidat)+'/ay':''}</div></div>
         <div style="text-align:right">
           <div style="font-size:18px;font-weight:900;color:${topBorc>0?'var(--warn)':'var(--ok)'}">
             ${topBorc>0?para(topBorc):'✓ Temiz'}
@@ -2310,19 +2318,21 @@ function renderSakinPanel(d){
     </div>`;
   }
 
+  const aidatEl=document.getElementById('sakinAidatDetay');
+
   // Bina giderleri — Firebase'den güncel veriyi kullan
   const giderEl=document.getElementById('sakinGiderDetay');
-  const giderler=hareketler.filter(h=>h.tip==='gider');
-  if(!giderler.length){
+  const giderlerS=hareketler.filter(h=>h.tip==='gider');
+  if(!giderlerS.length){
     giderEl.innerHTML=`<div class="bos-mesaj"><div class="bos-ikon">📊</div><p>Kayıtlı gider yok</p></div>`;
   } else {
-    const topGid=giderler.reduce((s,h)=>s+Number(h.tutar),0);
+    const topGid=giderlerS.reduce((s,h)=>s+Number(h.tutar),0);
     giderEl.innerHTML=`
       <div class="aidat-kart" style="margin-bottom:12px;text-align:center;background:#fff8f8">
         <div style="font-size:11px;color:var(--sub);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Toplam Bina Gideri</div>
         <div style="font-size:26px;font-weight:900;color:var(--warn)">${para(topGid)}</div>
       </div>`+
-      giderler.slice().reverse().map(h=>`
+      giderlerS.slice().reverse().map(h=>`
       <div class="fatura-kart">
         <div class="fatura-ikon diger">${(h.kategori||'📦').split(' ')[0]}</div>
         <div class="fatura-bilgi">
@@ -2333,7 +2343,7 @@ function renderSakinPanel(d){
       </div>`).join('');
   }
 
-  // Faturalar — Firebase'den güncel veriyi kullan
+  // Faturalar
   const faturaEl=document.getElementById('sakinFaturaDetay');
   if(!faturalar.length){
     faturaEl.innerHTML=`<div class="bos-mesaj"><div class="bos-ikon">🧾</div><p>Kayıtlı fatura yok</p></div>`;
@@ -2363,14 +2373,14 @@ function renderSakinPanel(d){
   if(!duyurular.length){
     duyuruEl.innerHTML=`<div class="bos-mesaj"><div class="bos-ikon">📢</div><p>Henüz duyuru yok</p></div>`;
   } else {
-    duyuruEl.innerHTML=duyurular.slice().reverse().map(d=>`
-      <div class="aidat-kart" style="border-left:4px solid ${d.renk||'var(--accent)'};margin-bottom:10px;">
+    duyuruEl.innerHTML=duyurular.slice().reverse().map(dy=>`
+      <div class="aidat-kart" style="border-left:4px solid ${dy.renk||'var(--accent)'};margin-bottom:10px;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
-          <div style="font-size:15px;font-weight:800;">${d.baslik}</div>
-          <div style="font-size:10px;color:var(--sub);font-weight:600;white-space:nowrap;margin-left:8px;">${formatTarih(d.tarih)}</div>
+          <div style="font-size:15px;font-weight:800;">${dy.baslik}</div>
+          <div style="font-size:10px;color:var(--sub);font-weight:600;white-space:nowrap;margin-left:8px;">${formatTarih(dy.tarih)}</div>
         </div>
-        <div style="font-size:13px;color:var(--text);line-height:1.6;">${d.icerik}</div>
-        ${d.onemli?'<div style="margin-top:8px;font-size:11px;font-weight:800;color:var(--warn);">⚠️ Önemli Duyuru</div>':''}
+        <div style="font-size:13px;color:var(--text);line-height:1.6;">${dy.icerik}</div>
+        ${dy.onemli?'<div style="margin-top:8px;font-size:11px;font-weight:800;color:var(--warn);">⚠️ Önemli Duyuru</div>':''}
       </div>`).join('');
   }
 }
