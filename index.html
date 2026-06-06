@@ -6,10 +6,9 @@
 <title>Bina Yönetici</title>
 
 <!-- Firebase -->
-<script type="module">
-  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-  import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script>
   const firebaseConfig = {
     apiKey: "AIzaSyBPKOpFHyXveW1pXfs1m5oPMesShmemIJI",
     authDomain: "bina-yonetici.firebaseapp.com",
@@ -18,87 +17,71 @@
     messagingSenderId: "476601864080",
     appId: "1:476601864080:web:67a2291b2ea299af47ad15"
   };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const binaRef = db.collection('bina').doc('veri');
 
-  const app = initializeApp(firebaseConfig);
-  const db  = getFirestore(app);
-
-  // Global erişim için window'a bağla
-  window._db          = db;
-  window._fsDoc       = doc;
-  window._fsSetDoc    = setDoc;
-  window._fsGetDoc    = getDoc;
-  window._fsOnSnapshot= onSnapshot;
-  window._fsCollection= collection;
-  window._firebaseHazir = true;
-
-  // Firestore'dan veri çek ve dinle
-  const binaRef = doc(db, 'bina', 'veri');
-
-  // Gerçek zamanlı dinle — her değişiklikte tüm veriyi güncelle
-  onSnapshot(binaRef, (snap) => {
-    if(snap.exists()){
-      const veri = snap.data();
-      // window üzerinden global değişkenlere eriş
-      if(veri.ayarlar)    window.ayarlar    = veri.ayarlar;
-      if(veri.hareketler) window.hareketler = veri.hareketler;
-      if(veri.daireler)   window.daireler   = veri.daireler;
-      if(veri.evraklar)   window.evraklar   = veri.evraklar;
-      if(veri.faturalar)  window.faturalar  = veri.faturalar;
-      if(veri.ekstralar)  window.ekstralar  = veri.ekstralar;
-
-      if(typeof render === 'function') render();
-      if(typeof kasaHesapla === 'function') kasaHesapla();
-
-      if(typeof aktifKullanici !== 'undefined' && aktifKullanici && aktifKullanici !== 'yonetici'){
-        const gD = window.daireler.find(d=>d.no===aktifKullanici.no)||aktifKullanici;
-        if(typeof renderSakinPanel==='function') renderSakinPanel(gD);
-      }
+  // Gerçek zamanlı dinle
+  binaRef.onSnapshot((snap) => {
+    if(!snap.exists) return;
+    const veri = snap.data();
+    if(veri.ayarlar)    ayarlar    = veri.ayarlar;
+    if(veri.hareketler) hareketler = veri.hareketler;
+    if(veri.daireler)   daireler   = veri.daireler;
+    if(veri.evraklar)   evraklar   = veri.evraklar;
+    if(veri.faturalar)  faturalar  = veri.faturalar;
+    if(veri.ekstralar)  ekstralar  = veri.ekstralar;
+    if(typeof render==='function') render();
+    if(typeof kasaHesapla==='function') kasaHesapla();
+    if(typeof aktifKullanici!=='undefined' && aktifKullanici && aktifKullanici!=='yonetici'){
+      const gD=daireler.find(d=>d.no===aktifKullanici.no)||aktifKullanici;
+      if(typeof renderSakinPanel==='function') renderSakinPanel(gD);
     }
   });
 
-  // Firestore'a kaydet fonksiyonu — global olarak tanımla
-  window.firebaseKaydet = async function(veri){
-    try {
-      window._sonKayit = {...veri};
-      await setDoc(binaRef, veri, { merge: true });
-    } catch(err){
-      console.error('Firebase kayıt hatası:', err);
-    }
+  // Firebase kaydet
+  window.firebaseKaydet = function(veri){
+    binaRef.set(veri, {merge:true}).catch(e=>console.error('Kayıt hatası:',e));
   };
 
-  // İlk yüklemede Firestore'dan çek
-  window.firebaseYukle = async function(sadeceCek){
-    try {
-      const snap = await getDoc(binaRef);
-      if(snap.exists()){
+  // Firebase yükle
+  window.firebaseYukle = function(sadeceCek){
+    return binaRef.get().then((snap)=>{
+      if(snap.exists){
         const veri = snap.data();
-        if(veri.ayarlar)    window.ayarlar    = veri.ayarlar;
-        if(veri.hareketler) window.hareketler = veri.hareketler;
-        if(veri.daireler)   window.daireler   = veri.daireler;
-        if(veri.evraklar)   window.evraklar   = veri.evraklar;
-        if(veri.faturalar)  window.faturalar  = veri.faturalar;
-        if(veri.ekstralar)  window.ekstralar  = veri.ekstralar;
-        localStorage.setItem('by2_ayarlar',    JSON.stringify(window.ayarlar));
-        localStorage.setItem('by2_hareketler', JSON.stringify(window.hareketler));
-        localStorage.setItem('by2_daireler',   JSON.stringify(window.daireler));
-        localStorage.setItem('by2_evraklar',   JSON.stringify(window.evraklar));
-        localStorage.setItem('by2_faturalar',  JSON.stringify(window.faturalar));
-        localStorage.setItem('by2_ekstralar',  JSON.stringify(window.ekstralar));
+        if(veri.ayarlar)    ayarlar    = veri.ayarlar;
+        if(veri.hareketler) hareketler = veri.hareketler;
+        if(veri.daireler)   daireler   = veri.daireler;
+        if(veri.evraklar)   evraklar   = veri.evraklar;
+        if(veri.faturalar)  faturalar  = veri.faturalar;
+        if(veri.ekstralar)  ekstralar  = veri.ekstralar;
+        localStorage.setItem('by2_ayarlar',    JSON.stringify(ayarlar));
+        localStorage.setItem('by2_hareketler', JSON.stringify(hareketler));
+        localStorage.setItem('by2_daireler',   JSON.stringify(daireler));
+        localStorage.setItem('by2_evraklar',   JSON.stringify(evraklar));
+        localStorage.setItem('by2_faturalar',  JSON.stringify(faturalar));
+        localStorage.setItem('by2_ekstralar',  JSON.stringify(ekstralar));
       }
-    } catch(err){
-      console.error('Firebase yükleme hatası:', err);
-    }
-    if(sadeceCek) return;
-    const yukleniyor = document.getElementById('firebaseYukleniyor');
-    if(yukleniyor) yukleniyor.innerHTML = `<div style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.15);padding:8px 16px;border-radius:20px;"><div style="width:8px;height:8px;border-radius:50%;background:#52b788;"></div><span style="font-size:12px;color:rgba(255,255,255,0.8);font-weight:700;">☁️ Bağlantı kuruldu</span></div>`;
-    setTimeout(()=>{ if(yukleniyor) yukleniyor.style.display='none'; }, 1500);
-    if(!window._firebaseBasladi && typeof uygulamaBaslat === 'function'){
-      window._firebaseBasladi = true;
-      uygulamaBaslat();
-    }
+      if(sadeceCek) return;
+      const yukleniyor=document.getElementById('firebaseYukleniyor');
+      if(yukleniyor){
+        yukleniyor.innerHTML=`<div style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.15);padding:8px 16px;border-radius:20px;"><div style="width:8px;height:8px;border-radius:50%;background:#52b788;"></div><span style="font-size:12px;color:rgba(255,255,255,0.8);font-weight:700;">☁️ Bağlantı kuruldu</span></div>`;
+        setTimeout(()=>yukleniyor.style.display='none', 1500);
+      }
+      if(!window._firebaseBasladi && typeof uygulamaBaslat==='function'){
+        window._firebaseBasladi=true;
+        uygulamaBaslat();
+      }
+    }).catch(e=>{
+      console.error('Yükleme hatası:',e);
+      if(!window._firebaseBasladi && typeof uygulamaBaslat==='function'){
+        window._firebaseBasladi=true;
+        uygulamaBaslat();
+      }
+    });
   };
 
-  // Firebase hazır olduğunda yükle
+  // Sayfa yüklenince başlat
   window.addEventListener('load', ()=> window.firebaseYukle());
 </script>
 
@@ -874,25 +857,15 @@ body{background:var(--bg);font-family:'Nunito',sans-serif;color:var(--text);min-
 
 <script>
 // ═══ VERİ ═══
-window.ayarlar    = JSON.parse(localStorage.getItem('by2_ayarlar')  || '{"binaAdi":"","adres":"","yonetici":"","kasaBaslangic":0}');
-window.hareketler = JSON.parse(localStorage.getItem('by2_hareketler') || '[]');
-window.daireler   = JSON.parse(localStorage.getItem('by2_daireler') || '[]');
-window.evraklar   = JSON.parse(localStorage.getItem('by2_evraklar') || '[]');
-window.faturalar  = JSON.parse(localStorage.getItem('by2_faturalar')|| '[]');
-window.ekstralar  = JSON.parse(localStorage.getItem('by2_ekstralar')|| '[]');
-// Kısa isimler de çalışsın
-var ayarlar    = window.ayarlar;
-var hareketler = window.hareketler;
-var daireler   = window.daireler;
-var evraklar   = window.evraklar;
-var faturalar  = window.faturalar;
-var ekstralar  = window.ekstralar;
+ayarlar    = JSON.parse(localStorage.getItem('by2_ayarlar')  || '{"binaAdi":"","adres":"","yonetici":"","kasaBaslangic":0}');
+hareketler = JSON.parse(localStorage.getItem('by2_hareketler') || '[]');
+daireler   = JSON.parse(localStorage.getItem('by2_daireler') || '[]');
+evraklar   = JSON.parse(localStorage.getItem('by2_evraklar') || '[]');
+faturalar  = JSON.parse(localStorage.getItem('by2_faturalar')|| '[]');
+ekstralar  = JSON.parse(localStorage.getItem('by2_ekstralar')|| '[]');
+
 
 function kaydet(){
-  // window değişkenlerini güncelle
-  window.ayarlar=ayarlar; window.hareketler=hareketler;
-  window.daireler=daireler; window.evraklar=evraklar;
-  window.faturalar=faturalar; window.ekstralar=ekstralar;
   // localStorage yedek
   localStorage.setItem('by2_ayarlar',   JSON.stringify(ayarlar));
   localStorage.setItem('by2_hareketler',JSON.stringify(hareketler));
