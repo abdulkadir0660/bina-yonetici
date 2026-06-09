@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bina Yönetici — Kurulum Kılavuzu</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Playfair+Display:wght@700;900&display=swap');
+
+:root {
+  --yesil: #2d6a4f;
+  --yesil2: #52b788;
+  --yesil-ac: #d8f3dc;
+  --turuncu: #f4a261;
+  --kirmizi: #e07a5f;
+  --lacivert: #1a3a6a;
+  --bg: #f8f5f0;
+  --card: #ffffff;
+  --text: #1a1a1a;
+  --sub: #666;
+  --border: #e8e2d8;
+  --shadow: 0 4px 24px rgba(0,0,0,0.08);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  font-family: 'Nunito', sans-serif;
+  color: var(--text);
+  line-height: 1.6;
+}
+
+/* KAPAK */
+.kapak {
+  background: linear-gradient(135deg, #1a3a2a 0%, #2d6a4f 60%, #52b788 100%);
+  padding: 60px 24px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.kapak::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 300px; height: 300px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.05);
+}
+
+.kapak::after {
+  content: '';
+  position: absolute;
+  bottom: -80px; left: -40px;
+  width: 200px; height: 200px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.04);
+}
+
+.kapak-ikon { font-size: 64px; margin-bottom: 16px; }
+
+.kapak h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(24px, 5vw, 40px);
+  color: #fff;
+  margin-bottom: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.kapak p {
+  font-size: 14px;
+  color: rgba(255,255,255,0.75);
+  font-weight: 600;
+  position: relative;
+  z-index: 1;
+}
+
+.altin-serit {
+  height: 5px;
+  background: linear-gradient(90deg, #8a6400, #f0d070, #c8a84b, #f0d070, #8a6400);
+}
+
+/* İÇERİK */
+.icerik {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 32px 20px 60px;
+}
+
+/* BÖLÜM BAŞLIĞI */
+.bolum {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 28px 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+.bolum::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+}
+
+.bolum.yesil::before { background: linear-gradient(90deg, #2d6a4f, #52b788); }
+.bolum.turuncu::before { background: linear-gradient(90deg, #f4a261, #e07a5f); }
+.bolum.mavi::before { background: linear-gradient(90deg, #1a3a6a, #2d5aaa); }
+.bolum.mor::before { background: linear-gradient(90deg, #6a1a4f, #aa2d8a); }
+.bolum.altin::before { background: linear-gradient(90deg, #8a6400, #f0d070, #8a6400); }
+
+.bolum-baslik {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bolum-no {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--yesil);
+  color: #fff;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ADIM */
+.adim {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 16px;
+  align-items: flex-start;
+}
+
+.adim-no {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--yesil-ac);
+  color: var(--yesil);
+  font-size: 12px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.adim-metin { flex: 1; font-size: 14px; }
+.adim-metin strong { color: var(--yesil); font-weight: 800; }
+.adim-metin .link { color: #1a6aaa; font-weight: 800; text-decoration: none; }
+
+/* KOD KUTUSU */
+.kod {
+  background: #1a2a1a;
+  color: #7affaa;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  margin: 8px 0;
+  overflow-x: auto;
+  border-left: 3px solid var(--yesil2);
+}
+
+/* BİLGİ KUTUSU */
+.bilgi {
+  background: var(--yesil-ac);
+  border: 1px solid var(--yesil2);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--yesil);
+  margin: 10px 0;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.uyari {
+  background: #fff8e1;
+  border: 1px solid #f4a261;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #8a5200;
+  margin: 10px 0;
+  display: flex;
+  gap: 8px;
+}
+
+/* TABLO */
+.tablo {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin: 12px 0;
+}
+
+.tablo th {
+  background: var(--yesil);
+  color: #fff;
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: .5px;
+}
+
+.tablo td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.tablo tr:nth-child(even) td { background: #f8f8f5; }
+.tablo tr:last-child td { border-bottom: none; }
+
+/* DOSYA LİSTESİ */
+.dosya-liste {
+  background: #f5f5f0;
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 2;
+}
+
+.dosya-satir { display: flex; align-items: center; gap: 8px; }
+.dosya-ikon { font-size: 16px; }
+.dosya-adi { color: #1a1a1a; font-weight: 700; }
+.dosya-aciklama { color: var(--sub); font-family: 'Nunito', sans-serif; font-size: 12px; }
+
+/* EKRAN GÖRÜNTÜSÜ SİMÜLASYONU */
+.telefon-mockup {
+  background: #1a1a1a;
+  border-radius: 20px;
+  padding: 12px;
+  max-width: 260px;
+  margin: 16px auto;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+.telefon-ekran {
+  background: linear-gradient(135deg, #2d6a4f, #52b788);
+  border-radius: 12px;
+  padding: 20px 16px;
+  text-align: center;
+  color: #fff;
+}
+
+.telefon-ekran .t-ikon { font-size: 36px; }
+.telefon-ekran .t-baslik { font-size: 14px; font-weight: 800; margin-top: 6px; }
+.telefon-ekran .t-alt { font-size: 11px; opacity: .7; margin-top: 2px; }
+
+/* SAYFA FOOTER */
+.footer {
+  background: #1a3a2a;
+  padding: 24px;
+  text-align: center;
+  color: rgba(255,255,255,0.6);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* ÖZELLIK KARTLARI */
+.ozellik-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.ozellik-kart {
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 14px;
+  text-align: center;
+  border: 1px solid var(--border);
+}
+
+.ozellik-kart .ok { font-size: 28px; margin-bottom: 6px; }
+.ozellik-kart .ob { font-size: 13px; font-weight: 800; color: var(--yesil); }
+.ozellik-kart .oa { font-size: 11px; color: var(--sub); margin-top: 3px; }
+
+/* BASKIDA GİZLE */
+@media print {
+  .kapak { padding: 30px; }
+  .bolum { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+
+<!-- KAPAK -->
+<div class="kapak">
+  <div class="kapak-ikon">🏢</div>
+  <h1>Bina Yönetici Sistemi</h1>
+  <p>Kurulum & Kullanım Kılavuzu — v1.0</p>
+</div>
+<div class="altin-serit"></div>
+
+<div class="icerik">
+
+  <!-- ZIP İÇERİĞİ -->
+  <div class="bolum altin">
+    <div class="bolum-baslik"><span>📦</span> ZIP Dosyası İçeriği</div>
+    <div class="dosya-liste">
+      <div class="dosya-satir"><span class="dosya-ikon">📄</span><span class="dosya-adi">index.html</span><span class="dosya-aciklama">— Ana uygulama (GitHub Pages için)</span></div>
+      <div class="dosya-satir"><span class="dosya-ikon">📄</span><span class="dosya-adi">bina_yonetici.html</span><span class="dosya-aciklama">— Yedek uygulama dosyası</span></div>
+      <div class="dosya-satir"><span class="dosya-ikon">📋</span><span class="dosya-adi">manifest.json</span><span class="dosya-aciklama">— Uygulama ayarları (PWA)</span></div>
+      <div class="dosya-satir"><span class="dosya-ikon">⚙️</span><span class="dosya-adi">sw.js</span><span class="dosya-aciklama">— Offline çalışma desteği</span></div>
+      <div class="dosya-satir"><span class="dosya-ikon">🖼️</span><span class="dosya-adi">icon-192.png</span><span class="dosya-aciklama">— Uygulama ikonu (küçük)</span></div>
+      <div class="dosya-satir"><span class="dosya-ikon">🖼️</span><span class="dosya-adi">icon-512.png</span><span class="dosya-aciklama">— Uygulama ikonu (büyük)</span></div>
+    </div>
+    <div class="bilgi"><span>💡</span> Tüm dosyalar her zaman aynı klasörde bulunmalıdır. Hiçbirini silme!</div>
+  </div>
+
+  <!-- HESAP AÇMA -->
+  <div class="bolum mavi">
+    <div class="bolum-baslik"><div class="bolum-no">1</div> Gerekli Hesaplar</div>
+
+    <div class="adim">
+      <div class="adim-no">A</div>
+      <div class="adim-metin">
+        <strong>GitHub Hesabı</strong> — Uygulamayı internette yayınlamak için<br>
+        <a href="https://github.com" class="link">→ github.com</a> sitesine git → <strong>Sign up</strong> → E-posta, şifre, kullanıcı adı gir → Ücretsiz plan seç<br>
+        <span style="font-size:12px;color:var(--sub);">Tamamen ücretsiz, kart bilgisi gerekmez</span>
+      </div>
+    </div>
+
+    <div class="adim">
+      <div class="adim-no">B</div>
+      <div class="adim-metin">
+        <strong>Firebase Hesabı</strong> — Verileri bulutta saklamak için<br>
+        <a href="https://firebase.google.com" class="link">→ firebase.google.com</a> → <strong>Get Started</strong> → Google hesabınla giriş yap<br>
+        <span style="font-size:12px;color:var(--sub);">Google hesabın varsa direkt giriş yapabilirsin</span>
+      </div>
+    </div>
+
+    <div class="bilgi"><span>✅</span> İki hesap da tamamen ücretsiz. Bina yönetimi için yeterli kota var.</div>
+  </div>
+
+  <!-- FİREBASE KURULUM -->
+  <div class="bolum turuncu">
+    <div class="bolum-baslik"><div class="bolum-no" style="background:#f4a261">2</div> Firebase Kurulumu (Veritabanı)</div>
+
+    <div class="adim">
+      <div class="adim-no" style="background:#fff0e0;color:#c47000">1</div>
+      <div class="adim-metin"><strong>Firebase Console'a git:</strong> <a href="https://console.firebase.google.com" class="link">console.firebase.google.com</a></div>
+    </div>
+
+    <div class="adim">
+      <div class="adim-no" style="background:#fff0e0;color:#c47000">2</div>
+      <div class="adim-metin"><strong>Create a project</strong> → Proje adı: <code style="background:#f5f0e0;padding:2px 6px;border-radius:4px;">bina-yonetici</code> → Devam et</div>
+    </div>
+
+    <div class="adim">
+      <div class="adim-no" style="background:#fff0e0;color:#c47000">3</div>
+      <div class="adim-metin">Sol menüden <strong>Firestore Database</strong> → <strong>Create database</strong> → <strong>Standard edition</strong> → Next → Bölge: <strong>europe-west1 (Belgium)</strong> → Next</div>
+    </div>
+
+    <div class="adim">
+      <div class="adim-no" style="background:#fff0e0;color:#c47000">4</div>
+      <div class="adim-metin"><strong>Start in test mode</strong> seç → <strong>Create</strong> butonuna bas</div>
+    </div>
+
+    <div class="adim">
+      <div class="adim-no" style="background:#fff0e0;color:#c47000">5</div>
+      <div class="adim-metin">Veritabanı açılınca <strong>Rules</strong> sekmesine tıkla → Aşağıdaki kodu yapıştır → <strong>Publish</strong> bas:</div>
+    </div>
+
+    <div class="kod">rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}</div>
+
+    <div class="uyari"><span>⚠️</span> Bu kural herkese açık — güvenlik uygulama içindeki şifre sistemiyle sağlanıyor.</div>
+  </div>
+
+  <!-- GITHUB KURULUM -->
+  <div class="bolum yesil">
+    <div class="bolum-baslik"><div class="bolum-no">3</div> GitHub'a Yükleme (Online Yayın)</div>
+
+    <div class="adim">
+      <div class="adim-no">1</div>
+      <div class="adim-metin"><a href="https://github.com" class="link">github.com</a> → Giriş yap → Sağ üstte <strong>+</strong> → <strong>New repository</strong></div>
+    </div>
+
+    <div class="adim">
+      <div class="adim-no">2</div>
+      <div class="adim-metin">Repository name: <code style="background:#f0f9f4;padding:2px 6px;border-radius:4px;">bina-yonetici</code> → <strong>Public</strong> seç → <strong>Add a README file</strong> işaretle → <strong>Create repository</strong></div>
+    </div>
+
+    <div class="adim">
+      <div class="adim-no">3</div>
+      <div class="adim-metin"><strong>Add file</strong> → <strong>Upload files</strong> → ZIP içindeki 6 dosyanın tamamını sürükle bırak → <strong>Commit changes</strong></div>
+    </div>
+
+    <div class="adim">
+      <div class="adim-no">4</div>
+      <div class="adim-metin">Üstte <strong>Settings</strong> → Sol menüde <strong>Pages</strong> → Branch: <strong>main</strong> seç → <strong>Save</strong> → 2 dakika bekle → Sayfayı yenile</div>
+    </div>
+
+    <div class="adim">
+      <div class="adim-no">5</div>
+      <div class="adim-metin">Yeşil kutuda link çıkar:<br>
+      <div class="kod">https://KULLANICIADINN.github.io/bina-yonetici</div>
+      Bu linki herkese gönder!</div>
+    </div>
+
+    <div class="bilgi"><span>🔗</span> Link sonsuza kadar aktif kalır, GitHub hesabın olduğu sürece kapanmaz.</div>
+  </div>
+
+  <!-- TELEFONA KURULUM -->
+  <div class="bolum mor">
+    <div class="bolum-baslik"><div class="bolum-no" style="background:#6a1a4f">4</div> Telefona Uygulama Olarak Kurma</div>
+
+    <table class="tablo">
+      <thead>
+        <tr><th>Cihaz</th><th>Tarayıcı</th><th>Adımlar</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>📱 Android</strong></td>
+          <td>Chrome</td>
+          <td>Linki aç → Sağ üst 3 nokta → <strong>"Ana ekrana ekle"</strong> → Ekle</td>
+        </tr>
+        <tr>
+          <td><strong>🍎 iPhone</strong></td>
+          <td>Safari ⚠️</td>
+          <td>Linki Safari'de aç → Alt ortadaki paylaş butonu → <strong>"Ana Ekrana Ekle"</strong> → Ekle</td>
+        </tr>
+        <tr>
+          <td><strong>💻 Bilgisayar</strong></td>
+          <td>Chrome</td>
+          <td>Linki aç → Adres çubuğu sağında 💻 ikonu → <strong>"Yükle"</strong></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="uyari"><span>⚠️</span> iPhone'da mutlaka <strong>Safari</strong> kullan! Chrome veya başka tarayıcıda "Ana Ekrana Ekle" seçeneği çıkmaz.</div>
+
+    <div class="telefon-mockup">
+      <div class="telefon-ekran">
+        <div class="t-ikon">🏢</div>
+        <div class="t-baslik">Bina Yönetici</div>
+        <div class="t-alt">Ana ekranında uygulama gibi</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KULLANIM -->
+  <div class="bolum yesil">
+    <div class="bolum-baslik"><div class="bolum-no">5</div> Uygulama Kullanımı</div>
+
+    <p style="font-size:14px;margin-bottom:16px;font-weight:700;">Uygulama açılınca giriş ekranı gelir. İki tür kullanıcı var:</p>
+
+    <table class="tablo">
+      <thead>
+        <tr><th>Kullanıcı</th><th>Giriş</th><th>Ne Görebilir?</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>🔑 Yönetici</strong></td>
+          <td>Yönetici şifresi</td>
+          <td>Her şey — kasa, daireler, aidat, ekstra, evrak, fatura, duyuru, ayarlar</td>
+        </tr>
+        <tr>
+          <td><strong>🏠 Sakin</strong></td>
+          <td>Daire no + şifre</td>
+          <td>Kendi aidatı, ekstra ödemeleri, duyurular, bina giderleri, faturalar</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="bilgi"><span>💡</span> İlk açılışta yönetici şifresi belirlenir. Sakin şifreleri Daireler sayfasından daire düzenlenirken eklenir.</div>
+
+    <div style="margin-top:16px;">
+      <div class="bolum-baslik" style="font-size:16px;margin-bottom:12px;"><span>📱</span> Sayfalar ve Özellikler</div>
+      <div class="ozellik-grid">
+        <div class="ozellik-kart"><div class="ok">💰</div><div class="ob">Kasa</div><div class="oa">Gelir/gider takibi, bakiye</div></div>
+        <div class="ozellik-kart"><div class="ok">🏠</div><div class="ob">Daireler</div><div class="oa">Sakin bilgileri, şifre</div></div>
+        <div class="ozellik-kart"><div class="ok">📅</div><div class="ob">Aidat</div><div class="oa">Aylık takip, erken ödeme</div></div>
+        <div class="ozellik-kart"><div class="ok">🏗️</div><div class="ob">Ekstra</div><div class="oa">Özel kampanyalar</div></div>
+        <div class="ozellik-kart"><div class="ok">📋</div><div class="ob">Evraklar</div><div class="oa">Sigorta, asansör, bakım</div></div>
+        <div class="ozellik-kart"><div class="ok">🧾</div><div class="ob">Faturalar</div><div class="oa">Su, gaz, elektrik</div></div>
+        <div class="ozellik-kart"><div class="ok">📢</div><div class="ob">Duyurular</div><div class="oa">Tüm sakinlere duyuru</div></div>
+        <div class="ozellik-kart"><div class="ok">⚙️</div><div class="ob">Ayarlar</div><div class="oa">Bina bilgileri, yedek</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- YEDEK -->
+  <div class="bolum altin">
+    <div class="bolum-baslik"><span>💾</span> Veri Yedekleme</div>
+
+    <div class="adim">
+      <div class="adim-no">1</div>
+      <div class="adim-metin">Uygulamayı aç → <strong>⚙️ Ayarlar</strong> sayfasına git</div>
+    </div>
+    <div class="adim">
+      <div class="adim-no">2</div>
+      <div class="adim-metin"><strong>📤 Yedek Al</strong> butonuna bas → JSON dosyası indirilir</div>
+    </div>
+    <div class="adim">
+      <div class="adim-no">3</div>
+      <div class="adim-metin">Bu dosyayı WhatsApp'ta kendine gönder veya Google Drive'a yükle</div>
+    </div>
+    <div class="adim">
+      <div class="adim-no">4</div>
+      <div class="adim-metin">Veri kaybında: <strong>📥 Yedek Yükle</strong> → JSON dosyasını seç → Tüm veriler geri gelir</div>
+    </div>
+
+    <div class="bilgi"><span>📅</span> Ayda bir yedek almanı öneririz. Veriler Firebase'de güvende ama yedek almak daha iyi!</div>
+  </div>
+
+  <!-- ÖNEMLİ NOTLAR -->
+  <div class="bolum turuncu">
+    <div class="bolum-baslik"><span>⚠️</span> Önemli Notlar</div>
+
+    <table class="tablo">
+      <thead><tr><th>Konu</th><th>Açıklama</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Veriler nerede?</strong></td><td>Firebase bulut sunucusunda — telefon değişse de kaybolmaz</td></tr>
+        <tr><td><strong>İnternet gerekli mi?</strong></td><td>Evet, Firebase bağlantısı için internet şart</td></tr>
+        <tr><td><strong>Kaç kişi kullanabilir?</strong></td><td>Sınırsız — tüm sakinler aynı anda kullanabilir</td></tr>
+        <tr><td><strong>Ücretli mi?</strong></td><td>Hayır — GitHub ve Firebase ücretsiz kotada çalışır</td></tr>
+        <tr><td><strong>Şifre unuttum</strong></td><td>Ayarlar → Yönetici Şifresi bölümünden değiştirilebilir</td></tr>
+        <tr><td><strong>Güncelleme</strong></td><td>Yeni index.html gelirse GitHub'a yükle, link değişmez</td></tr>
+        <tr><td><strong>iOS Safari şart mı?</strong></td><td>Ana ekrana eklemek için evet, normal kullanım için hayır</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- İLETİŞİM -->
+  <div class="bolum yesil">
+    <div class="bolum-baslik"><span>📞</span> Destek</div>
+    <p style="font-size:14px;line-height:1.8;">
+      Herhangi bir sorun yaşarsanız veya yeni özellik eklemek isterseniz geliştiricinizle iletişime geçin.<br><br>
+      <strong>Uygulama Claude AI ile geliştirilmiştir.</strong>
+    </p>
+  </div>
+
+</div>
+
+<div class="footer">
+  Bina Yönetici Sistemi — Kurulum Kılavuzu v1.0 &nbsp;|&nbsp; Tüm hakları saklıdır
+</div>
+
+</body>
+</html>
